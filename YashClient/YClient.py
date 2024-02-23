@@ -13,7 +13,6 @@ def clear_screen():
 
 
 
-
 serverName = ""
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
@@ -22,36 +21,61 @@ clientSocket.connect((serverName,serverPort))
 while logged_in == False:
     username = raw_input("Enter Username:\n")
     password = raw_input("Enter Password:\n")
-    message = "LOGIN " + "\r\n" + "USERNAME " + username.upper() + "\r\nPASSWORD " + password.upper() + "IP NUMBER " + clientSocket.getsockname + "\r\n\r\n"
+    message = "LOGIN " + "\r\n" + "USERNAME " + username.upper() + "\r\nPASSWORD " + password.upper() + "\r\nIP NUMBER " + clientSocket.getsockname + "\r\n\r\n"
     clientSocket.send(message.encode())
     returnmessage = clientSocket.recv(1024)
     #Decision Tree
-    # If incorrect password
-    # If user logged in already
-    # If successful - logged_in = True
+    returncommand = returnmessage[0:returnmessage.index("\r")]
+    reason = returnmessage[returnmessage.index("\n")+1:]
+
+    if returncommand == "UNSUCCESSFUL":
+        if reason == "DUPLICATE":                                                       # If user logged in already
+            print("User ({}) already logged into the server.".format(username))
+        else:                                                                           # If incorrect password
+            print("Password incorrect.")
+        
+    else:                                                                               # If successful - logged_in = True
+        if reason == "NEW":
+            print ("New user successfully registered.")
+        else:
+            print ("Welcome back {}!".format(username))
+        logged_in = True
+    
+   
+   
 
 
 while logged_in == True:
-    clear_screen()  #clear terminal
-    message = "STATUS " + "\r\n" + "USERNAME " + username 
+    
+    message = "STATUS \r\nGET\r\n" + "\r\n" + "USERNAME " + username 
     clientSocket.send(message.encode())
     returnmessage = clientSocket.recv(1024)
-    print ("Your status is: " + returnmessage[]) #DECIDE ON PROTOCOL FOR THIS 
+    print ("Your status is: " + returnmessage[returnmessage.index("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
     
-    user_choice = (raw_input("Choose an option:\n")).upper() #add all options
+    options = "Choose an option:\n1.) \n2.) \n3.) \n4.) \n5.)"              #String of options to be displayed
 
-    if user_choice == "D":
+    user_choice = (raw_input(options)).upper() #add all options
+
+    if user_choice == "":                                           #Should be second last option
         clientSocket.close()
         print("You have been Disconnected.")
 
-    if user_choice == "Q":
+    if user_choice == "":                                           #Last option
         exit
 
     if user_choice == "S":
-        #CHANGE STATUS
-        #CLEAR THE LIST etc. every time
+        newstatus = raw_input("What would you like to set your status to?\n1.) Available\n2.) Away\n")
 
+        if newstatus == "1":
+            message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
+        elif newstatus == "2":
+            message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
+        else:
+            print("Invalid choice.")
 
+   
+    clientSocket.send(message.encode())
+    returnmessage = clientSocket.recv(1024)
 
         
 
