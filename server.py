@@ -61,7 +61,7 @@ def status(message):                                # Get Protocol: "STATUS \r\n
     commanddetails = message[:message.index("\r")]
     message = message[message.index("\n")+1:]
     username = message[10:message.index("\r")]
-    message = [message.index("\n")+1:]
+    message = message[message.index("\n")+1:]
     if commanddetails == "GET":
         userstatus = ""
         for x in users:
