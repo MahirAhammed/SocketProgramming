@@ -12,13 +12,15 @@ server.listen(10)
 print("Waiting for connection...")
 
 while True:
+    response =""
     connectionSocket, addr = server.accept()
     print(f"Connected to {addr}")
 
+    #Receive message from client
     message = connectionSocket.recv(1024).decode()
     print(message)
 
-    #Decision tree
+    #Decision tree // formulate response depending on message received
     command = message[0:message.index("\r")]
     message = message [message.index("\n") + 1:]
     if command == "LOGIN":
@@ -26,8 +28,8 @@ while True:
     if command == "STATUS":
         status(message)
 
+    #Send response to client
     connectionSocket.send(response.encode())
-
     connectionSocket.close()
 
 
