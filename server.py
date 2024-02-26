@@ -14,7 +14,7 @@ def main():
     connectionSocket, addr = server.accept()
     print(f"Connected to {addr}")
 
-    while True:
+    while True:                                                             #While connected?
         #Receive message from client
         message = connectionSocket.recv(1024).decode()
         print(message)
@@ -28,8 +28,8 @@ def main():
         if command == "STATUS":
             returnmessage = status(message)
 
-        if command == "DISCONNECT":
-            connectionSocket.close()
+        #if command == "DISCONNECT":                #Will the connectionsocket ever close server-side?
+            #connectionSocket.close()
 
         #Send response to client
         print (returnmessage)
