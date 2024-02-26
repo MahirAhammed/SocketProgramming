@@ -15,28 +15,32 @@ def main():
     print(f"Connected to {addr}")
 
     while True:                                                             #While connected?
-        #Receive message from client
-        message = connectionSocket.recv(1024).decode()
-        print(message)
+        try:
+            #Receive message from client
+            message = connectionSocket.recv(1024).decode()
+            print(message)
 
-        #Decision tree // formulate response depending on message received
-        command = message[0:message.find("\r")-1]
-        message = message [message.find("\n") + 1:]
-        if command == "LOGIN":
-            returnmessage = login(message)
+            #Decision tree // formulate response depending on message received
+            command = message[0:message.find("\r")-1]
+            message = message [message.find("\n") + 1:]
+            if command == "LOGIN":
+                returnmessage = login(message)
 
-        if command == "STATUS":
-            returnmessage = status(message)
-        
+            if command == "STATUS":
+                returnmessage = status(message)
+            
 
-        if command == "LIST":
-            returnmessage = list_clients()
+            if command == "LIST":
+                returnmessage = list_clients()
 
-        #Send response to client
-        print (returnmessage)
-        connectionSocket.send(returnmessage.encode())
-
-        
+            #Send response to client
+            print (returnmessage)
+            connectionSocket.send(returnmessage.encode())
+        except:
+            print("Client disconnected. Waiting for reconnect...")
+            server.listen(10)
+            connectionSocket, addr = server.accept()
+            print(f"Connected to {addr}")
 
 
 def login(message):
