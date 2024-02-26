@@ -45,8 +45,9 @@ def main():
         returnmessage = clientSocket.recv(1024).decode()
         print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
         
-        options = "Choose an option:\n1.) Connect to a Client\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.)Exit\n"              #String of options to be displayed
-
+    
+        options = "Choose an option:\n1.) Connect to a Client\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.) Exit\n"              #String of options to be displayed
+ 
         user_choice = (input(options))#add all options
 
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
@@ -55,7 +56,7 @@ def main():
 
 
         elif user_choice == "5":                                           #Last option
-            exit
+            exit()
 
         elif user_choice == "4":                                           #Should be second last option
             clientSocket.close()
@@ -63,20 +64,35 @@ def main():
             print("You have been Logged Out.")
 
         else:
-        
-            if user_choice == "S":
+            
+            if user_choice == "3":
                 newstatus = input("What would you like to set your status to?\n1.) Available\n2.) Away\n")
-
                 if newstatus == "1":
                     message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
+                    clientSocket.send(message.encode())
                 elif newstatus == "2":
                     message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
+                    clientSocket.send(message.encode())
                 else:
                     print("Invalid choice.")
 
-        
-            clientSocket.send(message.encode())
-            returnmessage = clientSocket.recv(1024)
+            elif user_choice == "2":
+                #List clients
+                message = "LIST \r\n"
+                clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\r\n" + ....
+                returnmessage = returnmessage[returnmessage.find("\n")+1:]
+                client_list = "\tLIST OF USERS:\t\nUSERNAME\tSTATUS\n"
+                while (returnmessage!="\r\n\r\n"):             #while not end of the message / list
+                    client_list += returnmessage[:returnmessage.find("\r")]
+                    returnmessage = returnmessage[returnmessage.find("\r")+1:]
+                    client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
+                    returnmessage = returnmessage[returnmessage.find("\n")+1:]
+                print(client_list)
+            
+
+           
+
 
             
 if __name__ == "__main__":

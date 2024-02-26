@@ -27,9 +27,10 @@ def main():
 
         if command == "STATUS":
             returnmessage = status(message)
+        
 
-        #if command == "DISCONNECT":                #Will the connectionsocket ever close server-side?
-            #connectionSocket.close()
+        if command == "LIST":
+            returnmessage = list_clients()
 
         #Send response to client
         print (returnmessage)
@@ -87,6 +88,19 @@ def status(message):                                # Get Protocol: "STATUS \r\n
                 x.set_status(newstatus)
     return response
         
+
+def list_clients():
+    response = "LIST \r\n"
+    for x in users:
+        if (x.get_status != "AWAY"):
+            response += x.get_username() + "\r"
+            response += x.get_status() + "\r\n"
+    response += "\r\n\r\n"
+    return response
+    
+
+    
+
 
 
 if __name__ == "__main__":
