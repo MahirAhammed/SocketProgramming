@@ -33,14 +33,14 @@ def main():
                 print ("Welcome back {}!".format(username))
             logged_in = True
 
-    print(logged_in)  
+
     
     
 
 
     while logged_in == True:
         
-        message = "STATUS \r\nGET\r\n" + "USERNAME " + username +"\r\n\r\n"
+        message = "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
         print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
@@ -56,6 +56,8 @@ def main():
 
 
         elif user_choice == "5":                                           #Last option
+            message = message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
+            clientSocket.send(message.encode())
             exit()
 
         elif user_choice == "4":                                           #Should be second last option
@@ -63,33 +65,35 @@ def main():
             logged_in = False
             print("You have been Logged Out.")
 
-        else:
+     
             
-            if user_choice == "3":
-                newstatus = input("What would you like to set your status to?\n1.) Available\n2.) Away\n")
-                if newstatus == "1":
-                    message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
-                    clientSocket.send(message.encode())
-                elif newstatus == "2":
-                    message = "STATUS \r\nSET\r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
-                    clientSocket.send(message.encode())
-                else:
-                    print("Invalid choice.")
-
-            elif user_choice == "2":
-                #List clients
-                message = "LIST \r\n"
+        elif user_choice == "3":
+            newstatus = input("What would you like to set your status to?\n1.) Available\n2.) Away\n")
+            if newstatus == "1":
+                message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
                 clientSocket.send(message.encode())
-                returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\r\n" + ....
+            elif newstatus == "2":
+                message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
+                clientSocket.send(message.encode())
+            else:
+                print("Invalid choice.")
+
+        elif user_choice == "2":
+            #List clients
+            message = "LIST \r\n"
+            clientSocket.send(message.encode())
+            returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\ripaddress\r\n" + ....
+            returnmessage = returnmessage[returnmessage.find("\n")+1:]
+            client_list = "\t\tLIST OF USERS:\t\nUSERNAME\t"+ "STATUS".ljust(10)+"\tIP ADDRESS\n"
+            while (returnmessage!="\r\n\r\n"):             #while not end of the message / list
+                client_list += (returnmessage[:returnmessage.find("\r")]).ljust(10)
+                returnmessage = returnmessage[returnmessage.find("\r")+1:]
+                client_list += "\t{}".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
+                returnmessage = returnmessage[returnmessage.find("\r")+1:]
+                client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
                 returnmessage = returnmessage[returnmessage.find("\n")+1:]
-                client_list = "\tLIST OF USERS:\t\nUSERNAME\tSTATUS\n"
-                while (returnmessage!="\r\n\r\n"):             #while not end of the message / list
-                    client_list += returnmessage[:returnmessage.find("\r")]
-                    returnmessage = returnmessage[returnmessage.find("\r")+1:]
-                    client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
-                    returnmessage = returnmessage[returnmessage.find("\n")+1:]
-                print(client_list)
-            
+            print(client_list)
+        
 
            
 

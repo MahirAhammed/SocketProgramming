@@ -1,17 +1,23 @@
 from socket import *
 from user import *
-users = []
+import concurrent.futures
 
+users = []
+pool = concurrent.futures.ThreadPoolExecutor(max_workers= 100)
+    
 def main():
+    while True:
+        pool.submit(server)
+    pool.shutdown(wait=True)
+
+def server():
     PORT=12001
     HOST = "192.168.56.1"
-
-    server = socket(AF_INET,SOCK_STREAM)
-    server.bind((HOST,PORT))
-
-    server.listen(10)
+    serversocket = socket(AF_INET,SOCK_STREAM)
+    serversocket.bind((HOST,PORT))
+    serversocket.listen(10)
     print("Waiting for connection...")
-    connectionSocket, addr = server.accept()
+    connectionSocket, addr = serversocket.accept()
     print(f"Connected to {addr}")
 
     while True:                                                             #While connected?
@@ -26,11 +32,13 @@ def main():
             if command == "LOGIN":
                 returnmessage = login(message)
 
-            if command == "STATUS":
-                returnmessage = status(message)
+            elif command == "GETSTATUS":
+                returnmessage = getstatus(message)
             
+            elif command == "SETSTATUS":
+                setstatus(message)
 
-            if command == "LIST":
+            elif command == "LIST":
                 returnmessage = list_clients()
 
             #Send response to client
@@ -38,9 +46,11 @@ def main():
             connectionSocket.send(returnmessage.encode())
         except:
             print("Client disconnected. Waiting for reconnect...")
-            server.listen(10)
-            connectionSocket, addr = server.accept()
+            serversocket.listen(10)
+            print("Waiting for connection...")
+            connectionSocket, addr = serversocket.accept()
             print(f"Connected to {addr}")
+            
 
 
 def login(message):
@@ -51,16 +61,17 @@ def login(message):
     ip_num = message[10:message.find("\r")]
     found = False
     for x in users:
-        if x.get_username == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
+        if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
             found = True
-            if (x.get_status == "AVAILABLE"):
+    
+            if (x.get_status() == "AVAILABLE"):
                 response =  "UNSUCCESSFUL \r\n" + "DUPLICATE \r\n\r\n"
-            elif x.get_password == password :
+            elif x.get_password() == password :
                 ### SUCCESSFUL LOGIN
                 response = "SUCCESSFUL \r\n" + "EXISTING \r\n\r\n"
-                if x.get_status != "AWAY":
+                if x.get_status() != "AWAY":
                     x.set_status("AVAILABLE")
-                if x.get_ip_num!=ip_num:
+                if x.get_ip_num()!=ip_num:
                     x.set_ip_num(ip_num)
             else:
                 response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
@@ -70,27 +81,26 @@ def login(message):
     return response
 
 #Get a user's status or set new status
-def status(message):                                # Get Protocol: "STATUS \r\nGET\r\n" + "USERNAME " + username +"\r\n\r\n"
-    commanddetails = message[:message.find("\r")]
-    message = message[message.find("\n")+1:]
+def getstatus(message):                                # Get Protocol: "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
     username = message[9:message.find("\r")]
-    
-    if commanddetails == "GET":
-        userstatus = ""
-        for x in users:
-            if x.get_username() == username:
-                userstatus = x.get_status()
-        if userstatus == "":
-            response = "STATUS \r\nDNE\r\n\r\n"
-        else:
-            response = "STATUS \r\n{}\r\n\r\n".format(userstatus)
-    else:                                             # Set Protocol: "STATUS \r\n" + "SET\r\n" + "USERNAME {}\r\n".format(username) + "AVAILABLE\r\n\r\n"
-        message = message[message.find("\n")+1:]
-        newstatus = message[:message.find("\r")]
-        for x in users:
-            if x.get_username==username:
-                x.set_status(newstatus)
+    userstatus = ""
+    for x in users:
+        if x.get_username() == username:
+            userstatus = x.get_status()
+    if userstatus == "":
+        response = "STATUS \r\nDNE\r\n\r\n"
+    else:
+        response = "STATUS \r\n{}\r\n\r\n".format(userstatus)
     return response
+
+def setstatus(message):                                    # Set Protocol: "SETSTATUS \r\n" +  "USERNAME {}\r\n".format(username) + "AVAILABLE\r\n\r\n"
+    username = message[9:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    newstatus = message[:message.find("\r")]
+    for x in users:
+        if x.get_username()==username:
+            x.set_status(newstatus)
+        
         
 
 def list_clients():
@@ -98,11 +108,10 @@ def list_clients():
     for x in users:
         if (x.get_status != "AWAY"):
             response += x.get_username() + "\r"
-            response += x.get_status() + "\r\n"
+            response += x.get_status() + "\r"
+            response += x.get_ip_num() + "\r\n"
     response += "\r\n\r\n"
     return response
-    
-
     
 
 

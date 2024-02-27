@@ -9,7 +9,7 @@ class user:
         return self.username
     
     def get_password(self):
-        return self.username
+        return self.password
     
     def get_ip_num(self):
         return self.ip_num
