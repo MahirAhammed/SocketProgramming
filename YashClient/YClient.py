@@ -3,16 +3,16 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "192.168.56.1"
+serverName = "196.47.229.247"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 
 
 
-def listen(sport):
+def listen():
     sock = socket(AF_INET, SOCK_DGRAM)
-    sock.bind((clientSocket.getsockname()[0], sport))
+    sock.bind((clientSocket.getsockname()[0], ))
 
     while True:
         data = sock.recv(1024)
@@ -64,18 +64,18 @@ def main():
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
             peer_username = input("Enter Peer Username:\n")
             ip_address = input("Enter Peer IP Address:\n")
-            port = 12001
             
 
-            listener = Thread(target=listen(port), daemon=True);
+            listener = Thread(target=listen, daemon=True);
             listener.start()
 
-            sock = socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.bind(clientSocket.getsockname()[0], port)
+            sock = socket(AF_INET, SOCK_DGRAM)  
+            sock.bind((clientSocket.getsockname()[0], 12000))
+            sock.sendto(b'0',(ip_address,11999))
 
             while True:
                 msg = input('> ')
-                sock.sendto(msg.encode(), (ip_address, port))
+                sock.sendto(msg.encode(), (ip_address, 12000))
             
 
 

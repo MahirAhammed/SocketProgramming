@@ -8,7 +8,7 @@ users = []
 def main():                         #Need to go to next thread as soon as new connection OR as soon as previous thread is connected
 
     PORT=12001
-    HOST = "192.168.56.1"
+    HOST = "196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
