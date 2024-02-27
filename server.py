@@ -1,24 +1,32 @@
 from socket import *
 from user import *
-import concurrent.futures
+
+from threading import Thread
 
 users = []
-pool = concurrent.futures.ThreadPoolExecutor(max_workers= 100)
-    
-def main():
-    while True:
-        pool.submit(server)
-    pool.shutdown(wait=True)
 
-def server():
+def main():                         #Need to go to next thread as soon as new connection OR as soon as previous thread is connected
+
     PORT=12001
     HOST = "192.168.56.1"
     serversocket = socket(AF_INET,SOCK_STREAM)
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
+
     print("Waiting for connection...")
-    connectionSocket, addr = serversocket.accept()
-    print(f"Connected to {addr}")
+    
+    
+    while True:                                                                     #Multiple Clients can connect at once (Thread created for each Client)
+        connectionSocket, addr = serversocket.accept()
+        serverthread = Thread(target=server, args=(connectionSocket,addr))
+        serverthread.start()
+        print(f"Connected to {addr}")
+       
+
+    pool.shutdown(wait=True)
+    s.close()
+
+def server(connectionSocket,addr):
 
     while True:                                                             #While connected?
         try:
