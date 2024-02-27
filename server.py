@@ -42,7 +42,7 @@ def server(connectionSocket,addr):
                 returnmessage = getstatus(message)
             
             elif command == "SETSTATUS":
-                setstatus(message)
+                returnmessage = setstatus(message)
 
             elif command == "LIST":
                 returnmessage = list_clients()
@@ -102,6 +102,9 @@ def setstatus(message):                                    # Set Protocol: "SETS
     for x in users:
         if x.get_username()==username:
             x.set_status(newstatus)
+            print(x.get_status())       ###
+    response = "DONE"
+    return response
         
         
 

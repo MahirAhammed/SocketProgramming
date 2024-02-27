@@ -3,7 +3,7 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "192.168.3.75"
+serverName = "192.168.3.75"             # UCT : 196.47.229.247"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
@@ -57,7 +57,7 @@ def main():
         print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
         
     
-        options = "Choose an option:\n1.) Chat\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.) Exit\n"              #String of options to be displayed
+        options = "Choose an option:\n1.) Chat\n2.) List Clients\n3.) Set Status\n4.) Exit\n"              #String of options to be displayed
  
         user_choice = (input(options))#add all options
 
@@ -79,15 +79,10 @@ def main():
             
 
 
-        elif user_choice == "5":                                           #Last option
+        elif user_choice == "4":                                           #Last option
             message = message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
             clientSocket.send(message.encode())
             exit()
-
-        elif user_choice == "4":                                           #Should be second last option
-            clientSocket.close()
-            logged_in = False
-            print("You have been Logged Out.")
 
      
             
@@ -96,9 +91,11 @@ def main():
             if newstatus == "1":
                 message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
                 clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode()
             elif newstatus == "2":
                 message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
                 clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode()
             else:
                 print("Invalid choice.")
 
