@@ -5,10 +5,10 @@ from threading import Thread
 
 users = []
 
-def main():                         #Need to go to next thread as soon as new connection OR as soon as previous thread is connected
+def main():                         
 
     PORT=12001
-    HOST = "196.47.229.247"
+    HOST = "192.168.3.75"    # UCT : 196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
@@ -23,12 +23,10 @@ def main():                         #Need to go to next thread as soon as new co
         print(f"Connected to {addr}")
        
 
-    pool.shutdown(wait=True)
-    s.close()
-
+   
 def server(connectionSocket,addr):
 
-    while True:                                                             #While connected?
+    while True:                                                             
         try:
             #Receive message from client
             message = connectionSocket.recv(1024).decode()
@@ -53,11 +51,7 @@ def server(connectionSocket,addr):
             print (returnmessage)
             connectionSocket.send(returnmessage.encode())
         except:
-            print("Client disconnected. Waiting for reconnect...")
-            serversocket.listen(10)
-            print("Waiting for connection...")
-            connectionSocket, addr = serversocket.accept()
-            print(f"Connected to {addr}")
+            break
             
 
 
