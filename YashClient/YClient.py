@@ -1,12 +1,23 @@
 from socket import *
 import sys, subprocess
-
+from threading import Thread
 
 
 serverName = "192.168.56.1"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
+
+
+
+def listen(sport):
+    sock = socket(AF_INET, SOCK_DGRAM)
+    sock.bind((clientSocket.getsockname()[0], sport))
+
+    while True:
+        data = sock.recv(1024)
+        print('\rpeer: {}\n> '.format(data.decode()), end='')
+
 
 def main():
     logged_in = False
@@ -46,13 +57,26 @@ def main():
         print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
         
     
-        options = "Choose an option:\n1.) Connect to a Client\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.) Exit\n"              #String of options to be displayed
+        options = "Choose an option:\n1.) Chat\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.) Exit\n"              #String of options to be displayed
  
         user_choice = (input(options))#add all options
 
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
             peer_username = input("Enter Peer Username:\n")
             ip_address = input("Enter Peer IP Address:\n")
+            port = 12001
+            
+
+            listener = Thread(target=listen(port), daemon=True);
+            listener.start()
+
+            sock = socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.bind(clientSocket.getsockname()[0], port)
+
+            while True:
+                msg = input('> ')
+                sock.sendto(msg.encode(), (ip_address, port))
+            
 
 
         elif user_choice == "5":                                           #Last option
