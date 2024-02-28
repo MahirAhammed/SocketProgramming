@@ -7,8 +7,8 @@ users = []
 
 def main():                         
 
-    PORT=12001
-    HOST = "192.168.3.75"    # UCT : 196.47.229.247"
+    PORT=8888
+    HOST = "127.0.0.1"    # UCT : 196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
@@ -30,11 +30,12 @@ def server(connectionSocket,addr):
         try:
             #Receive message from client
             message = connectionSocket.recv(1024).decode()
-            print(message)
+            
 
             #Decision tree // formulate response depending on message received
             command = message[0:message.find("\r")-1]
             message = message [message.find("\n") + 1:]
+            
             if command == "LOGIN":
                 returnmessage = login(message)
 
@@ -56,11 +57,14 @@ def server(connectionSocket,addr):
 
 
 def login(message):
-    username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname + "\r\n\r\n"
+    username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname + "\r\nSOCKET NUMBER " + str(clientSocket.getsockname()[1]) + "\r\n\r\n"
     message = message[message.find("\n")+1:]
     password = message[9:message.find("\r")]
     message = message[message.find("\n")+1:]
     ip_num = message[10:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    sock_num = message[14:message.find("\r")]
+    print(sock_num)
     found = False
     for x in users:
         if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
@@ -75,10 +79,12 @@ def login(message):
                     x.set_status("AVAILABLE")
                 if x.get_ip_num()!=ip_num:
                     x.set_ip_num(ip_num)
+                if x.get_sock_num()!=sock_num:
+                    x.set_sock_num(sock_num)    
             else:
                 response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
     if found == False :
-        users.append(user(username,password,ip_num,"AVAILABLE"))
+        users.append(user(username,password,ip_num,sock_num,"AVAILABLE"))
         response = "SUCCESSFUL \r\n" + "NEW \r\n\r\n"
     return response
 
@@ -113,8 +119,13 @@ def list_clients():
     for x in users:
         if (x.get_status != "AWAY"):
             response += x.get_username() + "\r"
+            
             response += x.get_status() + "\r"
-            response += x.get_ip_num() + "\r\n"
+            
+            response += x.get_ip_num() + "\r"
+           
+            response += x.get_sock_num() + "\r\n"
+            
     response += "\r\n\r\n"
     return response
     
@@ -123,7 +134,4 @@ def list_clients():
 
 if __name__ == "__main__":
     main()
-    
-
-     
     
