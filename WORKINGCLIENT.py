@@ -3,7 +3,7 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "196.47.229.247"             # UCT : 196.47.229.247"
+serverName = "192.168.3.75"             # UCT : 196.47.229.247"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
@@ -54,19 +54,7 @@ def main():
 
         if user_choice == "1":                                  
             peer_username = input("Enter Peer Username:\n")
-            chat(peer_username,username)
-
-            listener = Thread(target=listen, daemon=True);
-            listener.start()
-
-            sock = socket(AF_INET, SOCK_DGRAM)  
-            sock.bind((clientSocket.getsockname()[0], 12000))
-            sock.sendto(b'0',(ip_address,11999))
-
-            while True:
-                msg = input('> ')
-                sock.sendto(msg.encode(), (ip_address, 12000))
-            
+            chat(peer_username,username)            
 
 
         elif user_choice == "4":                                           #Last option
@@ -117,15 +105,7 @@ def main():
         
 
 
-    
-def listen(sport):
-    sock = socket(AF_INET, SOCK_DGRAM)
-    sock.bind((serverName, sport))
-
-    while True:
-        data = sock.recv(1024)
-        print('\rpeer: {}\n> '.format(data.decode()), end='')
-
+  
 
 def chat(peer_username,username):
 
@@ -144,28 +124,38 @@ def chat(peer_username,username):
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
         ip_address = returnmessage[:returnmessage.find("\r")]
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
-        dport = returnmessage[:returnmessage.find("\r")]   
+        sport = returnmessage[:returnmessage.find("\r")]   
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
-        sport = returnmessage[:returnmessage.find("\r")]
+        dport = returnmessage[:returnmessage.find("\r")]
 
-        print(dport)
-        print(sport)
 
         dport = int(dport)
         sport = int(sport)
-
-        listener = Thread(target=listen(sport), daemon=True)
-        listener.start()
-
-        ready = input("Press enter")
+        print(dport)
+        print(sport)
 
         sock = socket(AF_INET, SOCK_DGRAM)  
-        sock.bind((serverName, dport))
+        sock.bind(('0.0.0.0', sport))
         sock.sendto(b'0',(ip_address,dport))
+
+          
+        def listen():
+            sock = socket(AF_INET, SOCK_DGRAM)
+            sock.bind(('0.0.0.0', sport))
+            while True:
+                data = sock.recv(1024)
+                print('\rpeer: {}\n> '.format(data.decode()), end='')
+
+
+        listener = Thread(target=listen, daemon=True)
+        listener.start()
+
+        sock = socket(AF_INET, SOCK_DGRAM)
+        sock.bind(('0.0.0.0', dport))
 
         while True:
             msg = input('> ')
-            sock.sendto(msg.encode(), (ip_address, dport))
+            sock.sendto(msg.encode(), (ip_address, sport))
             
 if __name__ == "__main__":
     main()

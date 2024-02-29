@@ -5,10 +5,12 @@ from threading import Thread
 
 users = []
 
+known_port = 50002
+
 def main():                         
 
     PORT=12001
-    HOST = "196.47.229.247"    # UCT : 196.47.229.247"
+    HOST = ""    # UCT : 196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
@@ -150,11 +152,11 @@ def chat(message):
                 elif status == "OFFLINE":
                     response = "OFFLINE\r\n\r\n"
                 else:
-                    for y in users:
-                        if y.get_username() == username:
-                            sport = y.get_sock_num()
+                    #for y in users:
+                       # if y.get_username() == username:
+                       #     sport = y.get_sock_num()
                             
-                    response = "AVAILABLE\r\n{}\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),sport)
+                    response = "AVAILABLE\r\n{}\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),known_port)
             
     elif command == "END":
         for x in users:
