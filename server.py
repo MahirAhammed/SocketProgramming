@@ -8,9 +8,9 @@ users = []
 def main():                         
 
     PORT=12001
-    HOST = "192.168.3.75"    # UCT : 196.47.229.247"
+    #HOST = "196.47.229.247"    # UCT : 196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
-    serversocket.bind((HOST,PORT))
+    serversocket.bind(("",PORT))
     serversocket.listen(10)
 
     print("Waiting for connection...")
@@ -46,6 +46,9 @@ def server(connectionSocket,addr):
 
             elif command == "LIST":
                 returnmessage = list_clients()
+
+            elif command == "CHAT":
+                returnmessage = chat(message)
 
             #Send response to client
             print (returnmessage)
@@ -118,6 +121,39 @@ def list_clients():
     response += "\r\n\r\n"
     return response
     
+
+def chat(message):
+    command =  message[:message.find("\r")]   #"CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,own_username)
+    message = message[message.find("\n")+1:]
+    peer_username = message[:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    username = message[:message.find("\r")]
+    print (command)
+    if command == "START":
+        for x in users:
+            if peer_username == x.get_username():
+                status = x.get_status()
+                if (status == "CHATTING") or (status=="AWAY"):
+                    response = "BUSY\r\n\r\n"
+                elif status == "OFFLINE":
+                    response = "OFFLINE\r\n\r\n"
+                else:
+                    response = "AVAILABLE\r\n{}\r\n\r\n".format(x.get_ip_num())
+                    '''for y in users:
+                        if y.get_username == username:
+                            y.set_status("CHATTING")'''
+            
+    elif command == "END":
+        for x in users:
+            if x.get_username() == username or x.get_username==peer_username:
+                x.set_status("AVAILABLE")
+                response ="TERMINATED\r\n\r\n"
+    return response
+                    
+
+                
+
+                
 
 
 

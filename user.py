@@ -18,10 +18,14 @@ class user:
     def get_status(self):
         return self.status
     
-    
+
     def set_status(self, status):
         self.status = status
     
     def set_ip_num(self, ip_num):
         self.ip_num = ip_num
+
+
+
+    
     

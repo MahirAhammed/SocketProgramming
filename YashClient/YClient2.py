@@ -3,7 +3,7 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "196.47.229.247"             # UCT : 196.47.229.247"
+serverName = "192.168.56.1"             # UCT : 196.47.229.247"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
@@ -31,7 +31,6 @@ def main():
         else:                                                                               # If successful - logged_in = True
             if reason == "NEW":
                 print ("New user successfully registered.")
-                print(clientSocket.getsockname()[1])
             else:
                 print ("Welcome back {}!".format(username))
             logged_in = True
@@ -102,7 +101,7 @@ def main():
     
 def listen():
     sock = socket(AF_INET, SOCK_DGRAM)
-    sock.bind((serverName, 12000))
+    sock.bind((serverName, 11999))
 
     while True:
         data = sock.recv(1024)
@@ -132,8 +131,8 @@ def chat(peer_username,username):
         ready = input("Press enter")
 
         sock = socket(AF_INET, SOCK_DGRAM)  
-        sock.bind((serverName, 11999))
-        sock.sendto(b'0',(ip_address,11999))
+        sock.bind((serverName, 12000))
+        sock.sendto(b'0',(ip_address,12000))
 
         while True:
             msg = input('> ')
