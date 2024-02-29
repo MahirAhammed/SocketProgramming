@@ -3,8 +3,8 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "127.0.0.1"             # UCT : 196.47.229.247"
-serverPort = 8888
+serverName = "196.47.229.247"             # UCT : 196.47.229.247"
+serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 
