@@ -8,9 +8,9 @@ users = []
 def main():                         
 
     PORT=12001
-    #HOST = "196.47.229.247"    # UCT : 196.47.229.247"
+    HOST = "196.47.229.247"    # UCT : 196.47.229.247"
     serversocket = socket(AF_INET,SOCK_STREAM)
-    serversocket.bind(("",PORT))
+    serversocket.bind((HOST,PORT))
     serversocket.listen(10)
 
     print("Waiting for connection...")
@@ -67,7 +67,7 @@ def login(message):
     ip_num = message[10:message.find("\r")]
     message = message[message.find("\n")+1:]
     sock_num = message[14:message.find("\r")]
-    print(sock_num)
+    
     found = False
     for x in users:
         if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
@@ -88,6 +88,7 @@ def login(message):
                 response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
     if found == False :
         users.append(user(username,password,ip_num,sock_num,"AVAILABLE"))
+        
         response = "SUCCESSFUL \r\n" + "NEW \r\n\r\n"
     return response
 
@@ -149,7 +150,12 @@ def chat(message):
                 elif status == "OFFLINE":
                     response = "OFFLINE\r\n\r\n"
                 else:
-                    response = "AVAILABLE\r\n{}\r\n\r\n".format(x.get_ip_num())
+                    for y in users:
+                        if y.get_username() == username:
+                            sport = y.get_sock_num()
+                            
+                    response = "AVAILABLE\r\n{0}\r\n{1}\r\n{2}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),sport)
+                    
                     '''for y in users:
                         if y.get_username == username:
                             y.set_status("CHATTING")'''

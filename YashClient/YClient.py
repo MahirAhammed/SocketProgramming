@@ -100,9 +100,9 @@ def main():
 
 
     
-def listen():
+def listen(sport):
     sock = socket(AF_INET, SOCK_DGRAM)
-    sock.bind((serverName, 12000))
+    sock.bind((serverName, sport))
 
     while True:
         data = sock.recv(1024)
@@ -122,22 +122,32 @@ def chat(peer_username,username):
         print("User is currently busy.")
 
     elif command =="AVAILABLE":
-        print("User available.")
+        print("User available.")                                        #AVAILABLE\r\npeerIP\r\ndport\r\nsport\r\n\r\n
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
         ip_address = returnmessage[:returnmessage.find("\r")]
+        returnmessage = returnmessage[returnmessage.find("\n")+1:]
+        dport = returnmessage[:returnmessage.find("\r")]   
+        returnmessage = returnmessage[returnmessage.find("\n")+1:]
+        sport = returnmessage[:returnmessage.find("\r")]
 
-        listener = Thread(target=listen, daemon=True)
+        print(dport)
+        print(sport)
+
+        dport = int(dport)
+        sport = int(sport)
+
+        listener = Thread(target=listen(sport), daemon=True)
         listener.start()
 
         ready = input("Press enter")
 
         sock = socket(AF_INET, SOCK_DGRAM)  
-        sock.bind((serverName, 11999))
-        sock.sendto(b'0',(ip_address,11999))
+        sock.bind((serverName, dport))
+        sock.sendto(b'0',(ip_address,dport))
 
         while True:
             msg = input('> ')
-            sock.sendto(msg.encode(), (ip_address, 12000))
+            sock.sendto(msg.encode(), (ip_address, dport))
 
             
 if __name__ == "__main__":

@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 class user:
     def __init__(self, username, password, ip_num, sock_num, status):
         self.username = username
@@ -19,7 +18,12 @@ class user:
     def get_status(self):
         return self.status
     
+    def get_sock_num(self):
+        return self.sock_num
     
+    def set_sock_num(self,sock_num):
+        self.sock_num = sock_num
+        
     def set_status(self, status):
         self.status = status
     
