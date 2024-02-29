@@ -154,11 +154,7 @@ def chat(message):
                         if y.get_username() == username:
                             sport = y.get_sock_num()
                             
-                    response = "AVAILABLE\r\n{0}\r\n{1}\r\n{2}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),sport)
-                    
-                    '''for y in users:
-                        if y.get_username == username:
-                            y.set_status("CHATTING")'''
+                    response = "AVAILABLE\r\n{}\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),sport)
             
     elif command == "END":
         for x in users:
