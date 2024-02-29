@@ -1,36 +1,161 @@
 from socket import *
-import threading
+from user import *
 
-main_server = socket(AF_INET, SOCK_STREAM)
-main_server.bind(('',14000))
-main_server.listen()
+from threading import Thread
 
-clients = []
+serversocket = socket(AF_INET,SOCK_STREAM)
+users = []
 
-server = socket(AF_INET, SOCK_DGRAM)
+def main():                         #Need to go to next thread as soon as new connection OR as soon as previous thread is connected
 
-def handle_chat():
+    PORT=12001
+    # HOST = "192.168.56.1"
+    HOST = "localhost"
+    serversocket.bind((HOST,PORT))
+    serversocket.listen(10)
 
-    while True:
+    print("Waiting for connection...")
+    
+    
+    while True:                                                                     #Multiple Clients can connect at once (Thread created for each Client)
+        connectionSocket, addr = serversocket.accept()
+        serverthread = Thread(target=server, args=(connectionSocket,addr))
+        serverthread.start()
+        print(f"Connected to {addr}")
+       
 
-        message, sender = server.recvfrom(1024)
-        print(f"{sender} : " + message.decode())
+    pool.shutdown(wait=True)
+    s.close()
 
-def handle_server():
-   while True:
-        client_socket, client_address = main_server.accept()
-        print(f"Connected: {client_address}")
-        clients.append((client_socket,client_address))
+def server(connectionSocket,addr):
+
+    while True:                                                             #While connected?
+        try:
+            #Receive message from client
+            message = connectionSocket.recv(1024).decode()
+            print(message)
+
+            #Decision tree // formulate response depending on message received
+            command = message[0:message.find("\r")-1]
+            message = message [message.find("\n") + 1:]
+            if command == "LOGIN":
+                returnmessage = login(message,connectionSocket)
+
+            elif command == "GETSTATUS":
+                returnmessage = getstatus(message)
+            
+            elif command == "SETSTATUS":
+                setstatus(message)
+
+            elif command == "LIST":
+                returnmessage = list_clients()
+
+            elif command == "CHAT":  ######
+                
+                demo = create_chat(message, connectionSocket,addr) ######
+                print(demo)
+
+            #Send response to client
+            print (returnmessage)
+            connectionSocket.send(returnmessage.encode())
+        except:
+            print("Client disconnected. Waiting for reconnect...")
+            serversocket.listen(10)
+            print("Waiting for connection...")
+            connectionSocket, addr = serversocket.accept()
+            print(f"Connected to {addr}")
+            
 
 
+def login(message, clientSocket):
+    username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname + "\r\n\r\n"
+    message = message[message.find("\n")+1:]
+    password = message[9:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    ip_num = message[10:message.find("\r")]
+    found = False
+    for x in users:
+        if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
+            found = True
+    
+            if (x.get_status() == "AVAILABLE"):
+                response =  "UNSUCCESSFUL \r\n" + "DUPLICATE \r\n\r\n"
+            elif x.get_password() == password :
+                ### SUCCESSFUL LOGIN
+                response = "SUCCESSFUL \r\n" + "EXISTING \r\n\r\n"
+                if x.get_status() != "AWAY":
+                    x.set_status("AVAILABLE")
+                if x.get_ip_num()!=ip_num:
+                    x.set_ip_num(ip_num)
+            else:
+                response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
+    if found == False :
+        users.append(user(username,password,ip_num,clientSocket,"AVAILABLE"))  ######
+        response = "SUCCESSFUL \r\n" + "NEW \r\n\r\n"
+    return response
 
-def main():
-    t1 = threading.Thread(target=handle_server)
-    t1.start()
+#Get a user's status or set new status
+def getstatus(message):                                # Get Protocol: "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
+    username = message[9:message.find("\r")]
+    userstatus = ""
+    for x in users:
+        if x.get_username() == username:
+            userstatus = x.get_status()
+    if userstatus == "":
+        response = "STATUS \r\nDNE\r\n\r\n"
+    else:
+        response = "STATUS \r\n{}\r\n\r\n".format(userstatus)
+    return response
 
-    t2 = threading.Thread(target=handle_chat)
-    t2.start()
+def setstatus(message):                                    # Set Protocol: "SETSTATUS \r\n" +  "USERNAME {}\r\n".format(username) + "AVAILABLE\r\n\r\n"
+    username = message[9:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    newstatus = message[:message.find("\r")]
+    for x in users:
+        if x.get_username()==username:
+            x.set_status(newstatus)
+        
+        
+
+def list_clients():
+    response = "LIST \r\n"
+    for x in users:
+        if (x.get_status != "AWAY"):
+            response += x.get_username() + "\r"
+            response += x.get_status() + "\r"
+            response += x.get_ip_num() + "\r\n"
+    response += "\r\n\r\n"
+    return response
+##############    
+def create_chat(message, connectionSocket, addr):
+    dest_username = message.strip()  #client asking for peer
+    chatSocket = socket(AF_INET, SOCK_DGRAM)
+    sport = 12350
+    dport = 9999
+
+    for user in users:
+        if (user.get_username() == dest_username):  
+            peerSocket = user.get_socket() ####send request to the user whether peer would like to chat
+            chatSocket.sendto(f"CHAT_REQUEST".encode, (peerSocket.gethostname()[0],dport))
+            response = chatSocket.recvfrom(1024)
+            response = response.decode()
+
+            if response.lower().strip() == 'y':
+                connectionSocket.send(f"{(user.get_ip_num(),dport)}".encode())  # send ip of target peer to client
+                peerSocket.send(f"{(addr[0],sport)}".encode())
+            else:
+                connectionSocket.send(f"CHAT_REJECTED".encode())
+                return "CHAT REJECTED"
+        else:
+            print("User not found")
+
+            return ""
+        
 
 
-if __name__ =='__main__':
+if __name__ == "__main__":
     main()
+    
+
+     
+    
