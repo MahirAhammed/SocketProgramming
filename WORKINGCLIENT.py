@@ -3,7 +3,7 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "192.168.3.75"             # UCT : 196.47.229.247"
+serverName = "localhost"             # UCT : 196.47.229.247"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
@@ -15,7 +15,6 @@ def main():
         username = input("Enter Username:\n")
         password = input("Enter Password:\n")
         message = "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname()[0] + "\r\nSOCKET NUMBER " + str(clientSocket.getsockname()[1]) + "\r\n\r\n"
-        print(message)
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
         #Decision Tree
@@ -42,10 +41,11 @@ def main():
 
     while logged_in == True:
         
+        print("Current User: {}\n".format(username))
         message = "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
-        print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
+        print ("Current Status: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
         
     
         options = "Choose an option:\n1.) Chat\n2.) List Clients\n3.) Set Status\n4.) Exit\n"              #String of options to be displayed
@@ -75,7 +75,7 @@ def main():
                 clientSocket.send(message.encode())
                 returnmessage = clientSocket.recv(1024).decode()
             else:
-                print("Invalid choice.")
+                print("Invalid choice.\n")
 
         elif user_choice == "2":
             #List clients
@@ -83,19 +83,19 @@ def main():
             clientSocket.send(message.encode())
             returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\ripaddress\r\n" + ....
             returnmessage = returnmessage[returnmessage.find("\n")+1:]
-            client_list = "\t\tLIST OF USERS:\t\nUSERNAME\t"+ "STATUS".ljust(10)+"\tIP ADDRESS".ljust(10)+"\tPORT NUMBER\t\n"
+            client_list = "\tLIST OF USERS:\t\nUSERNAME\t"+ "STATUS".ljust(10) + "\t\n"#+"\tIP ADDRESS".ljust(10)+"\tPORT NUMBER\t\n"      #PRIVACY CONCERN- don't display IP and Port
             while (returnmessage!="\r\n\r\n"):   
                      #while not end of the message / list
                 client_list += (returnmessage[:returnmessage.find("\r")]).ljust(10)
                 returnmessage = returnmessage[returnmessage.find("\r")+1:]
 
-                client_list += "\t{}".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
+                client_list += "\t{}\n".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
                 returnmessage = returnmessage[returnmessage.find("\r")+1:]
 
-                client_list += "\t{}".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
+                #client_list += "\t{}".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
                 returnmessage = returnmessage[returnmessage.find("\r")+1:]
 
-                client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
+                #client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
                 returnmessage = returnmessage[returnmessage.find("\n")+1:]
             print(client_list)
         
@@ -117,10 +117,13 @@ def chat(peer_username,username):
     command = returnmessage[:returnmessage.find("\r")]
 
     if command == "BUSY":
-        print("User is currently busy.")
+        print("User is currently busy.\n")
+    
+    elif command == "OFFLINE":
+        print("User is currently offline.\n")
 
     elif command =="AVAILABLE":
-        print("User available.")                                        #AVAILABLE\r\npeerIP\r\ndport\r\nsport\r\n\r\n
+        print("User available. Initializing chat...\n")                                        #AVAILABLE\r\npeerIP\r\ndport\r\nsport\r\n\r\n
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
         ip_address = returnmessage[:returnmessage.find("\r")]
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
