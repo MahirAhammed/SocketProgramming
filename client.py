@@ -3,12 +3,15 @@ import sys, subprocess
 from threading import Thread
 
 
-serverName = "196.47.229.247"             # UCT : 196.47.229.247"
-serverPort = 12001
+serverName = "127.0.0.1"             # UCT : 196.47.229.247"
+serverPort = 8888
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
 
-
+socket =socket(AF_INET,SOCK_DGRAM)
+socket.bind(('localhost',0))
+Udp = socket.getsockname()[1]
+print(Udp)
 
 def listen():
     sock = socket(AF_INET, SOCK_DGRAM)
@@ -24,7 +27,7 @@ def main():
     while logged_in == False:
         username = input("Enter Username:\n")
         password = input("Enter Password:\n")
-        message = "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname()[0] + "\r\nSOCKET NUMBER " + str(clientSocket.getsockname()[1]) + "\r\n\r\n"
+        message = "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname()[0] + "\r\nSOCKET NUMBER " + str(Udp) + "\r\n\r\n"
         print(message)
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
