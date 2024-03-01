@@ -1,5 +1,4 @@
 from socket import *
-import sys, subprocess
 from threading import Thread
 
 
@@ -23,15 +22,15 @@ def main():
 
         if returncommand == "UNSUCCESSFUL":
             if reason == "DUPLICATE":                                                       # If user logged in already
-                print("User ({}) already logged into the server.".format(username))
+                print("\nUser ({}) already logged into the server.\n".format(username))
             else:                                                                           # If incorrect password
-                print("Password incorrect.")
+                print("\nPassword incorrect.\n")
             
         else:                                                                               # If successful - logged_in = True
             if reason == "NEW":
-                print ("New user successfully registered.")
+                print ("\nNew user successfully registered.\n")
             else:
-                print ("Welcome back {}!".format(username))
+                print ("\nWelcome back {}!\n".format(username))
             logged_in = True
 
 
