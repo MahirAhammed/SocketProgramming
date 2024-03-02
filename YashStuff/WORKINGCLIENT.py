@@ -158,7 +158,7 @@ def chat_session(peer_ip,peer_port):
         return
 
 def chat(peer_username,username):
-    message = "CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,username)           #Message to server requesting chat information
+    message = "CHAT \r\nSTART\r\n{}\r\n\r\n".format(peer_username)           #Message to server requesting chat information
     clientSocket.send(message.encode())
     returnmessage = clientSocket.recv(1024).decode()                                          #Chat info - peer status + other info if peer is available  
     command = returnmessage[:returnmessage.find("\r")]

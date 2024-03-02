@@ -132,11 +132,9 @@ def list_clients():
     
 
 def chat(message):
-    command =  message[:message.find("\r")]                     #Protocol: "CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,own_username)
+    command =  message[:message.find("\r")]                     #Protocol: "CHAT \r\nSTART\r\n{}\r\n\r\n".format(peer_username)
     message = message[message.find("\n")+1:]
     peer_username = message[:message.find("\r")]
-    message = message[message.find("\n")+1:]
-    username = message[:message.find("\r")]
     print (command)
     if command == "START":
         response = "DNE\r\n\r\n"
@@ -163,6 +161,11 @@ def set_socket(message):                                                        
     return "DONE"
 
 
+def getCurrentUser(ip_addr):
+    for user in users:
+        if user.get_ip_num() == ip_addr.strip():
+            return user   
+    return -1
                 
 
 
