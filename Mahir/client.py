@@ -141,31 +141,36 @@ def main():
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
                 
             peer_username = input("Enter Peer Username:\n")
-            message = "CHAT \r\n" + "{}\r\n\r\n".format(peer_username)
+            message = "CHAT \r\nSTART\r\n{}\r\n\r\n".format(peer_username) 
             clientSocket.send(message.encode())  
             response = clientSocket.recv(1024).decode()
-            
-            if response == 'USER NOT FOUND':
+            response = response[:response.find("\r")]
+
+            if response == 'DNE':
                 print("Invalid user")
                 continue
-            elif response == 'UNAVAILABLE':
+            elif response == 'BUSY':
                 print("User is currently not available")
+                continue
+            
+            elif response=="OFFLINE":
+                print("User is offline.")
+            
+            elif response == "AVAILABLE":
+                print("User is Available.\n")
+                peer_name = response[0: response.find("=")]
+                peer_ip = response[response.find("=")+1:response.find(":")]
+                peer_port = int(response[response.find(":") + 1:])
+                
+                global exit_flag
+                exit_flag = False
+                chat_thread = Thread(target=chat_session, args=((peer_ip,peer_port),peer_name),daemon=True)
+                chat_thread.start()
+
+                chat_thread.join()
                 continue
 
             print(response)
-
-            peer_name = response[0: response.find("=")]
-            peer_ip = response[response.find("=")+1:response.find(":")]
-            peer_port = int(response[response.find(":") + 1:])
-            
-            global exit_flag
-            exit_flag = False
-            chat_thread = Thread(target=chat_session, args=((peer_ip,peer_port),peer_name),daemon=True)
-            chat_thread.start()
-
-            chat_thread.join()
-            continue
-           
             
 
         # elif user_choice == "5":                                           #Last option
@@ -179,9 +184,11 @@ def main():
             if newstatus == "1":
                 message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"
                 clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode() 
             elif newstatus == "2":
                 message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) + "AWAY\r\n\r\n"
                 clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode() 
             else:
                 print("Invalid choice.")
 
@@ -189,15 +196,13 @@ def main():
             #List clients
             message = "LIST \r\n"
             clientSocket.send(message.encode())
-            returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\ripaddress\r\n" + ....
+            returnmessage = clientSocket.recv(1024).decode()            #"LIST \r\n" + "username\rstatus\r\n" + ....
             returnmessage = returnmessage[returnmessage.find("\n")+1:]
-            client_list = "\t\tLIST OF USERS:\t\nUSERNAME\t"+ "STATUS".ljust(10)+"\tIP ADDRESS\n"
+            client_list = "\tLIST OF USERS:\t\nUSERNAME\t"+ "STATUS".ljust(10)
             while (returnmessage!="\r\n\r\n"):             #while not end of the message / list
                 client_list += (returnmessage[:returnmessage.find("\r")]).ljust(10)
                 returnmessage = returnmessage[returnmessage.find("\r")+1:]
-                client_list += "\t{}".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
-                returnmessage = returnmessage[returnmessage.find("\r")+1:]
-                client_list += "\t{}\n".format(returnmessage[:returnmessage.find("\r")])
+                client_list += "\t{}\n".format((returnmessage[:returnmessage.find("\r")]).ljust(10))
                 returnmessage = returnmessage[returnmessage.find("\n")+1:]
             print(client_list)
         
@@ -206,8 +211,7 @@ def main():
             message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
             clientSocket.send(message.encode())                                         
             clientSocket.close()
-            logged_in = False
-            print("You have been Logged Out.")
+            exit()
    
 if __name__ == "__main__":
     main()
