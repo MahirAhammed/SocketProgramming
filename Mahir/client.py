@@ -8,57 +8,77 @@ serverName = "localhost"
 serverPort = 12001
 clientSocket = socket(AF_INET, SOCK_STREAM)
 clientSocket.connect((serverName,serverPort))
-
+# udp ports
+chatSocket = socket(AF_INET, SOCK_DGRAM)
+chatSocket.bind((clientSocket.getsockname()[0],0))
 
 def listen():
     
     while True:
-        chatSocket = socket(AF_INET, SOCK_DGRAM)
-        chatSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)  ###########
-        chatSocket.bind((clientSocket.getsockname()[0], 9999))
-        request, sender = clientSocket.recvfrom(1024)
-        if request.decode() == 'CHAT_REQUEST':
+        request, sender = chatSocket.recvfrom(1024)
+        request = request.decode()
+        print(request)
+        if (request[0:request.find("\r")] == 'CHAT REQUEST FROM '):
             response = input("Someone requested to chat to you. Accept? (y/n): ")
-            chatSocket.sendto(response.encode(),sender)
 
-            if (response == 'y'):
-                peer_addr = clientSocket.recv(1024).decode()
+            peer_ip = request[request.find("\n") + 1 : request.find(":")]
+            peer_port = int(request[request.find(":") + 1:])
+            if response =='y':
+                chat_session((peer_ip,peer_port))
+                return
+            else:
+                chatSocket.sendto(f"CHAT REJECTED".encode(),(peer_ip,peer_port))
                 
-                chat_session(chatSocket, peer_addr)
+                
+        # if request.decode() == 'CHAT_REQUEST':
+        #     chatSocket.sendto(response.encode(),sender)
 
-def chat_session(chatSocket, peer_addr):
+        #     if (response == 'y'):
+        #         peer_addr = chatSocket.recvfrom(1024)
+        #         print(peer_addr.decode())
+                # chat_session(chatSocket, peer_addr)
+
+def chat_session(peer_addr):
     try:
-        recv_thread = Thread(target=recv_messages, args=(chatSocket,))
+        recv_thread = Thread(target=recv_messages)
         recv_thread.start()
 
-        send_thread = Thread(target=send_messages, args=(chatSocket,peer_addr))
-        send_thread.start()
+        send_messages(peer_addr)
 
         recv_thread.join()
-        send_thread.join()
+
+        return
     
     except:
         print("Peer Disconnected")
         return
         
 
-def recv_messages(chatSocket):
+def recv_messages():
     try:
         while True:
             data, _ = chatSocket.recvfrom(1024)
-            print('\rpeer: {}\n> '.format(data.decode()), end='')
+            data = data.decode()
+            if data == 'QUIT_CHAT':
+                print("Peer left the chat")
+                return
+            elif data == 'CHAT REJECTED':
+                print("Chat request denied")
+                return
+
+            print('\rpeer: {}\n> '.format(data), end='')
     except:
         return
 
 
-def send_messages(chatSocket, peer_addr):
+def send_messages(peer_addr):
 
     try:
         while True:
             msg = input('> ')
-            if msg == 'QUIT_CHAT':
-                break
             chatSocket.sendto(msg.encode(),(peer_addr[0], peer_addr[1]))
+            if msg == 'QUIT_CHAT':
+                return
        
     except:
         return
@@ -66,10 +86,14 @@ def send_messages(chatSocket, peer_addr):
 
 def main():
     logged_in = False
+    listenerThread = Thread(target=listen, daemon=True)
+    
     while logged_in == False:
         username = input("Enter Username:\n")
         password = input("Enter Password:\n")
-        message = "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password + "\r\nIP NUMBER " + clientSocket.getsockname()[0] + "\r\n\r\n"
+        message = "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password +"\r\nIP NUMBER "+clientSocket.getsockname()[0] + "\r\nUDP PORT " + str(chatSocket.getsockname()[1]) + "\r\n\r\n"
+        
+        print(message)
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
         #Decision Tree
@@ -90,16 +114,16 @@ def main():
                 print ("Welcome back {}!".format(username))
             
             try:
-                listener = Thread(target=listen, daemon=True);
-                listener.start()
+                listenerThread.start()
+
             except Exception as e:
                 print(e)
+
             logged_in = True
 
 
     while logged_in == True:
-        
-        
+
         message = "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
         clientSocket.send(message.encode())
         returnmessage = clientSocket.recv(1024).decode()
@@ -111,30 +135,43 @@ def main():
 
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
             peer_username = input("Enter Peer Username:\n")
-            ip_address = input("Enter Peer IP Address:\n")    #not necessary
             message = "CHAT \r\n" + "{}\r\n\r\n".format(peer_username)
             clientSocket.send(message.encode())  #######
             response = clientSocket.recv(1024).decode()
-
-            if response.strip() == 'CHAT_REJECTED':
-                print('Chat request rejected')
+            
+            if response == 'USER NOT FOUND':
+                print("Invalid user")
                 continue
 
-            SPORT = 12350
+            print(response)
 
-            peer_addr  = clientSocket.recv(1024).decode()
+            # if response.strip() == 'CHAT_REJECTED':
+            #     print('Chat request rejected')
 
-            chatSocket = socket(AF_INET, SOCK_DGRAM)
-            chatSocket.bind((clientSocket.getsockname()[0], SPORT))
+            peer_ip = response[0:response.find(":")]
+            peer_port = int(response[response.find(":") + 1:])
+            
 
-            chat_session(chatSocket,peer_addr)
+            chat_thread = Thread(target=chat_session, args=((peer_ip,peer_port),),daemon=True)
+            chat_thread.start()
+
+            chat_thread.join()
+            continue
+            # SPORT = 12350
+
+            # peer_addr  = clientSocket.recv(1024).decode()
+
+            # chatSocket = socket(AF_INET, SOCK_DGRAM)
+            # chatSocket.bind((clientSocket.getsockname()[0], SPORT))
+
                 # sock.sendto(msg.encode(), (ip_address, port))
             
 
         elif user_choice == "5":                                           #Last option
             message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
             clientSocket.send(message.encode())
-            exit()
+            clientSocket.close()
+            logged_in = False
 
         elif user_choice == "4":                                           #Should be second last option
             clientSocket.close()

@@ -4,13 +4,14 @@ from user import *
 from threading import Thread
 
 serversocket = socket(AF_INET,SOCK_STREAM)
+HOST = "localhost"
 users = []
+
 
 def main():                         #Need to go to next thread as soon as new connection OR as soon as previous thread is connected
 
     PORT=12001
     # HOST = "192.168.56.1"
-    HOST = "localhost"
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
 
@@ -52,8 +53,7 @@ def server(connectionSocket,addr):
 
             elif command == "CHAT":  ######
                 
-                demo = create_chat(message, connectionSocket,addr) ######
-                print(demo)
+                returnmessage = create_chat(message,addr) ######
 
             #Send response to client
             print (returnmessage)
@@ -68,11 +68,14 @@ def server(connectionSocket,addr):
 
 
 def login(message, clientSocket):
-    username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname + "\r\n\r\n"
+    username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname+"\r\nUDP PORT "+udp_addr + "\r\n\r\n"
     message = message[message.find("\n")+1:]
     password = message[9:message.find("\r")]
     message = message[message.find("\n")+1:]
     ip_num = message[10:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    udp_addr = (ip_num,int(message[9:message.find("\r")]))
+
     found = False
     for x in users:
         if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
@@ -87,10 +90,12 @@ def login(message, clientSocket):
                     x.set_status("AVAILABLE")
                 if x.get_ip_num()!=ip_num:
                     x.set_ip_num(ip_num)
+                if x.get_udp_addr() != udp_addr:
+                    x.set_udp_addr(udp_addr)
             else:
                 response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
     if found == False :
-        users.append(user(username,password,ip_num,clientSocket,"AVAILABLE"))  ######
+        users.append(user(username,password,ip_num,udp_addr,"AVAILABLE"))  ######
         response = "SUCCESSFUL \r\n" + "NEW \r\n\r\n"
     return response
 
@@ -124,34 +129,35 @@ def list_clients():
             response += x.get_username() + "\r"
             response += x.get_status() + "\r"
             response += x.get_ip_num() + "\r\n"
+            # response += str(x.get_udp_addr()[1])+ "\r\n"
     response += "\r\n\r\n"
     return response
 ##############    
-def create_chat(message, connectionSocket, addr):
+def create_chat(message, sender_addr):
     dest_username = message.strip()  #client asking for peer
     chatSocket = socket(AF_INET, SOCK_DGRAM)
-    sport = 12350
-    dport = 9999
+    chatSocket.bind((HOST,0))
+
+    sender_user = getCurrentUser(sender_addr[0])
 
     for user in users:
         if (user.get_username() == dest_username):  
-            peerSocket = user.get_socket() ####send request to the user whether peer would like to chat
-            chatSocket.sendto(f"CHAT_REQUEST".encode, (peerSocket.gethostname()[0],dport))
-            response = chatSocket.recvfrom(1024)
-            response = response.decode()
+            peer_addr = user.get_udp_addr() ####send request to the user whether peer would like to chat
+            request = f"CHAT REQUEST FROM \r\n{sender_user.get_ip_num()}:{str(sender_user.get_udp_addr()[1])}"
+            chatSocket.sendto(request.encode(), peer_addr)
+            # response,_ = chatSocket.recvfrom(1024)
+            return  f"{peer_addr[0]}:{peer_addr[1]}"
 
-            if response.lower().strip() == 'y':
-                connectionSocket.send(f"{(user.get_ip_num(),dport)}".encode())  # send ip of target peer to client
-                peerSocket.send(f"{(addr[0],sport)}".encode())
-            else:
-                connectionSocket.send(f"CHAT_REJECTED".encode())
-                return "CHAT REJECTED"
-        else:
-            print("User not found")
+            
+    else:
+        return "USER NOT FOUND"
 
-            return ""
-        
 
+def getCurrentUser(ip_addr):
+    for user in users:
+        if user.get_ip_num() == ip_addr.strip():
+            return user   
+    return -1
 
 if __name__ == "__main__":
     main()
