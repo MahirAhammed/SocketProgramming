@@ -15,7 +15,7 @@ def main():                         #Need to go to next thread as soon as new co
     serversocket.bind((HOST,PORT))
     serversocket.listen(10)
 
-    print("Waiting for connection...")
+    print("==========SERVER RUNNING AND WAITNG FOR CONNECTIONS==========")
     
     
     while True:                                                                     #Multiple Clients can connect at once (Thread created for each Client)
@@ -143,10 +143,13 @@ def create_chat(message, sender_addr):
     for user in users:
         if (user.get_username() == dest_username):  
             peer_addr = user.get_udp_addr() ####send request to the user whether peer would like to chat
-            request = f"CHAT REQUEST FROM \r\n{sender_user.get_ip_num()}:{str(sender_user.get_udp_addr()[1])}"
-            chatSocket.sendto(request.encode(), peer_addr)
+            if (user.get_status() == 'AWAY' or user.get_status() == 'OFFLINE'):
+                return "UNAVAILABLE"
+            
+            # request = f"CHAT REQUEST \r\n{user.get_username()}={sender_user.get_ip_num()}:{str(sender_user.get_udp_addr()[1])}"
+            # chatSocket.sendto(request.encode(), peer_addr)
             # response,_ = chatSocket.recvfrom(1024)
-            return  f"{peer_addr[0]}:{peer_addr[1]}"
+            return  f"{user.get_username()}={peer_addr[0]}:{peer_addr[1]}"
 
             
     else:
