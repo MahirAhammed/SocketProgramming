@@ -115,7 +115,7 @@ def setstatus(message):                                    # Set Protocol: "SETS
         if x.get_username()==username:
             x.set_status(newstatus)
             print(x.get_status())       ###
-    response = "DONE"
+    response = "DONE"   
     return response
         
         
@@ -126,11 +126,7 @@ def list_clients():
         if (x.get_status != "AWAY"):
             response += x.get_username() + "\r"
             
-            response += x.get_status() + "\r"
-            
-            response += x.get_ip_num() + "\r"
-           
-            response += x.get_sock_num() + "\r\n"
+            response += x.get_status() + "\r\n"
             
     response += "\r\n\r\n"
     return response
