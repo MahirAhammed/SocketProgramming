@@ -181,8 +181,7 @@ def chat(peer_username,username):
 
         sport = int(sport)
 
-        global chatting
-        chatting=True
+        
         chat_thread = Thread(target=chat_session, args=(ip_address,sport,),daemon=True)                     #Thread for chatting
         chat_thread.start()
         chat_thread.join()
