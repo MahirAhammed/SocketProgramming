@@ -86,7 +86,7 @@ def send_messages(peer_addr):
 
 def main():
     logged_in = False
-    listenerThread = Thread(target=listen, daemon=True)
+    #listenerThread = Thread(target=listen, daemon=True)
     
     while logged_in == False:
         username = input("Enter Username:\n")
@@ -113,12 +113,7 @@ def main():
             else:
                 print ("Welcome back {}!".format(username))
             
-            try:
-                listenerThread.start()
-
-            except Exception as e:
-                print(e)
-
+           
             logged_in = True
 
 
@@ -134,6 +129,13 @@ def main():
         user_choice = (input(options))#add all options
 
         if user_choice == "1":                                  #Enter peer details and then connect with UDP
+
+            '''try:
+                listenerThread.start()
+
+            except Exception as e:
+                print(e)'''
+                
             peer_username = input("Enter Peer Username:\n")
             message = "CHAT \r\n" + "{}\r\n\r\n".format(peer_username)
             clientSocket.send(message.encode())  #######
