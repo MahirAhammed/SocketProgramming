@@ -49,6 +49,9 @@ def server(connectionSocket,addr):
             elif command == "CHAT":
                 returnmessage = chat(message)
 
+            elif command == "SOCKET":
+                returnmessage = set_socket(message)
+
             
             print (returnmessage)
             connectionSocket.send(returnmessage.encode())                               #Send response to client
@@ -119,7 +122,7 @@ def setstatus(message):                                    # Set Protocol: "SETS
 def list_clients():
     response = "LIST \r\n"
     for x in users:
-        if (x.get_status != "AWAY"):
+        if (x.get_status() != "AWAY"):
             response += x.get_username() + "\r"
             
             response += x.get_status() + "\r\n"
@@ -148,7 +151,16 @@ def chat(message):
     return response
                     
 
-                
+def set_socket(message):                                                                    #Set user's stored UDP port number to new value
+    username = message[:message.find("\r")]
+    message = message[message.find("\n")+1:]
+    newsocket = message[:message.find("\r")]
+
+    for x in users:
+        if x.get_username() == username:
+            x.set_sock_num(newsocket)
+    return "DONE"
+
 
                 
 

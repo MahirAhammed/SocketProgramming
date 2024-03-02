@@ -11,7 +11,8 @@ chatSocket = socket(AF_INET, SOCK_DGRAM)                            #Socket for 
 chatSocket.bind((clientSocket.getsockname()[0],0))
 
 username=""
-chatting=False                                                      #Global variable to ensure all chatting threads are ended when a user stops chatting
+
+bank = "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz,\'\"?!.$*&_0123456789"        #Global bank variable for encrypting and decrypting messages
 
 def main():
     logged_in = False
@@ -40,9 +41,6 @@ def main():
             logged_in = True
 
 
-    
-    
-
 
     while logged_in == True:
         
@@ -58,6 +56,7 @@ def main():
         user_choice = (input(options))
 
         if user_choice == "1":                                                                      #Chat with a specified user (they will not receive messages unless they choose to chat with you as well)
+            global peer_username
             peer_username = input("Enter Peer Username:\n")
             chat(peer_username,username)            
 
@@ -105,46 +104,40 @@ def main():
 
 def recv_messages():
     connected = False
-    global chatting
     try:
         while True:
-
-            if chatting==False:                                                             #end thread if user stops chatting
-                return
-            
             data, _ = chatSocket.recvfrom(1024)
             data = data.decode()
+            data = decrypt(data)
             if connected==False:                                                            #Once user receives first message, their status is set to "BUSY"
                 connected=True
                 global username
                 message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "BUSY\r\n\r\n"   
                 clientSocket.send(message.encode())
+                returnmessage = clientSocket.recv(1024).decode()
     
                 
             if data == 'QUIT_CHAT':                                                         #In order to leave a chat, user types "QUIT_CHAT" - here it is received from the peer
-                chatting=False                                                              #Global variable set
-                print("Peer left the chat")
+                                                                                            #Global variable set
+                print("Peer left the chat. Press enter to continue...")
+                chatSocket.close()
                 return
             
             print('\rpeer: {}\n> '.format(data), end='')
     except:
-        print("error")
         return
     
 
 def send_messages(peer_ip,peer_port):
-    global chatting
     try:
         while True:
-            if chatting==False:
-                return
-            
             msg = input('> ')
-            chatSocket.sendto(msg.encode(),(peer_ip, peer_port))
+            encmsg = encrypt(msg)                                                           #Encrypt the message for sending
+            chatSocket.sendto(encmsg.encode(),(peer_ip, peer_port))
             if msg == 'QUIT_CHAT':                                                          #In order to leave a chat, user types "QUIT_CHAT" - here it is sent to the peer
-                print("Disconnected from chat. Press enter...\n")
-                chatting=False                                                              #Gloabl variable set
-                return  
+                print("Disconnected from chat.\n")
+                chatSocket.close()
+                return    
     except:
         return
 
@@ -159,11 +152,10 @@ def chat_session(peer_ip,peer_port):
         return
     
     except:                                                                             
-        print("Peer Disconnected")
+        print("Peer Disconnected. Press enter to continue...")
         return
 
 def chat(peer_username,username):
-
     message = "CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,username)           #Message to server requesting chat information
     clientSocket.send(message.encode())
     returnmessage = clientSocket.recv(1024).decode()                                          #Chat info - peer status + other info if peer is available
@@ -190,10 +182,39 @@ def chat(peer_username,username):
         chat_thread = Thread(target=chat_session, args=(ip_address,sport,),daemon=True)                     #Thread for chatting
         chat_thread.start()
         chat_thread.join()
+        
 
         message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "AVAILABLE\r\n\r\n"              #Set user status back to Available once they have finished chatting
         clientSocket.send(message.encode())
+        returnmessage = clientSocket.recv(1024).decode()
+        global chatSocket
+        chatSocket = socket(AF_INET, SOCK_DGRAM)   
+        chatSocket.bind((clientSocket.getsockname()[0],0))
+        message = "SOCKET \r\n{}\r\n{}\r\n\r\n".format(username,chatSocket.getsockname()[1])
+        clientSocket.send(message.encode())
+        returnmessage = clientSocket.recv(1024).decode()
     
+def encrypt(message):                                               #Encryption using Caeser cipher - key = length of username
+    global username
+    global bank
+    key = len(username)
+    encrypted = ""
+    for x in message:
+        position = bank.find(x)
+        newposition = (position+key)%73
+        encrypted += bank[newposition]
+    return encrypted
+
+def decrypt(message):                                               #Decrypting message using peer's username as key
+    global bank
+    global peer_username
+    key = len(peer_username)
+    decrypted = ""
+    for x in message:
+        position = bank.find(x)
+        newposition = (position-key)%73
+        decrypted += bank[newposition]
+    return decrypted
 
         
             
