@@ -128,11 +128,11 @@ def list_clients():
         if (x.get_status != "AWAY"):
             response += x.get_username() + "\r"
             response += x.get_status() + "\r"
-            response += x.get_ip_num() + "\r\n"
-            # response += str(x.get_udp_addr()[1])+ "\r\n"
+            
     response += "\r\n\r\n"
     return response
-##############    
+
+
 def create_chat(message, sender_addr):
     dest_username = message.strip()  #client asking for peer
     chatSocket = socket(AF_INET, SOCK_DGRAM)
@@ -148,7 +148,7 @@ def create_chat(message, sender_addr):
             
             # request = f"CHAT REQUEST \r\n{user.get_username()}={sender_user.get_ip_num()}:{str(sender_user.get_udp_addr()[1])}"
             # chatSocket.sendto(request.encode(), peer_addr)
-            # response,_ = chatSocket.recvfrom(1024)
+
             return  f"{user.get_username()}={peer_addr[0]}:{peer_addr[1]}"
 
             
