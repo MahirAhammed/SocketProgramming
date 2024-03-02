@@ -139,10 +139,11 @@ def chat(message):
     username = message[:message.find("\r")]
     print (command)
     if command == "START":
+        response = "DNE\r\n\r\n"
         for x in users:
             if peer_username == x.get_username():
                 status = x.get_status()
-                if (status == "CHATTING") or (status=="AWAY"):
+                if (status == "BUSY") or (status=="AWAY"):
                     response = "BUSY\r\n\r\n"
                 elif status == "OFFLINE":
                     response = "OFFLINE\r\n\r\n"

@@ -58,6 +58,7 @@ def main():
         if user_choice == "1":                                                                      #Chat with a specified user (they will not receive messages unless they choose to chat with you as well)
             global peer_username
             peer_username = input("Enter Peer Username:\n")
+            print("\n")
             chat(peer_username,username)            
 
         elif user_choice == "2":                                                                    #List clients
@@ -103,6 +104,7 @@ def main():
 
 
 def recv_messages():
+    global peer_username
     connected = False
     try:
         while True:
@@ -117,13 +119,13 @@ def recv_messages():
                 returnmessage = clientSocket.recv(1024).decode()
     
                 
-            if data == 'QUIT_CHAT':                                                         #In order to leave a chat, user types "QUIT_CHAT" - here it is received from the peer
+            if data == 'QUIT':                                                         #In order to leave a chat, user types "QUIT_CHAT" - here it is received from the peer
                                                                                             #Global variable set
-                print("Peer left the chat. Press enter to continue...")
+                print("{} has left the chat. Press enter to continue...".format(peer_username))
                 chatSocket.close()
                 return
             
-            print('\rpeer: {}\n> '.format(data), end='')
+            print('\r{}: {}\n> '.format(peer_username,data), end='')
     except:
         return
     
@@ -134,7 +136,7 @@ def send_messages(peer_ip,peer_port):
             msg = input('> ')
             encmsg = encrypt(msg)                                                           #Encrypt the message for sending
             chatSocket.sendto(encmsg.encode(),(peer_ip, peer_port))
-            if msg == 'QUIT_CHAT':                                                          #In order to leave a chat, user types "QUIT_CHAT" - here it is sent to the peer
+            if msg == 'QUIT':                                                          #In order to leave a chat, user types "QUIT_CHAT" - here it is sent to the peer
                 print("Disconnected from chat.\n")
                 chatSocket.close()
                 return    
@@ -158,8 +160,7 @@ def chat_session(peer_ip,peer_port):
 def chat(peer_username,username):
     message = "CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,username)           #Message to server requesting chat information
     clientSocket.send(message.encode())
-    returnmessage = clientSocket.recv(1024).decode()                                          #Chat info - peer status + other info if peer is available
-    print(returnmessage)    
+    returnmessage = clientSocket.recv(1024).decode()                                          #Chat info - peer status + other info if peer is available  
     command = returnmessage[:returnmessage.find("\r")]
 
     if command == "BUSY":
@@ -168,8 +169,11 @@ def chat(peer_username,username):
     elif command == "OFFLINE":
         print("User is currently offline.\n")
 
+    elif command == "DNE":
+        print("User does not exist.\n")
+
     elif command =="AVAILABLE":
-        print("User available. Initializing chat...\n")                                        #AVAILABLE\r\npeerIP\r\npeerPort\r\n\r\n
+        print("User available. Initializing chat...\n\n(To quit a chat at any time, type QUIT and press enter.)\n")                                        #AVAILABLE\r\npeerIP\r\npeerPort\r\n\r\n
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
         ip_address = returnmessage[:returnmessage.find("\r")]
         returnmessage = returnmessage[returnmessage.find("\n")+1:]
