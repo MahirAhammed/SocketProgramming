@@ -17,31 +17,33 @@ chatSocket.bind((clientSocket.getsockname()[0],0))
 #     while True:
 #         request, sender = chatSocket.recvfrom(1024)
 #         request = request.decode()
-#         print(request)
-#         if (request[0:request.find("\r")] == 'CHAT REQUEST FROM '):
-#             response = input("Someone requested to chat to you. Accept? (y/n): ")
 
-#             peer_ip = request[request.find("\n") + 1 : request.find(":")]
+#         if (request[0:request.find("\r")] == 'CHAT REQUEST '):
+#             response = input("Someone requested to chat to you. Accept? (y/n): ")
+#             peer_name = request[request.find("\n") + 1 : request.find("=")]
+#             peer_ip = request[request.find("=") + 1 : request.find(":")]
 #             peer_port = int(request[request.find(":") + 1:])
 #             if response =='y':
-#                 chat_session((peer_ip,peer_port))
+#                 chatSocket.sendto("CHAT ACCEPTED".encode(), (peer_ip,peer_port))
+#                 chat_session((peer_ip,peer_port),peer_name)
 #                 return
 #             else:
 #                 chatSocket.sendto(f"CHAT REJECTED".encode(),(peer_ip,peer_port))
+#                 return
                 
 
 def chat_session(peer_addr,peer_name):
     global exit_flag
 
     try:
-        exit_flag = False
+        
         recv_thread = Thread(target=recv_messages,args=(peer_name, ))
         recv_thread.start()
 
         send_messages(peer_addr)
 
         recv_thread.join()
-
+        exit_flag = False
         return
     
     except:
@@ -93,7 +95,8 @@ def send_messages(peer_addr):
 
 def main():
     logged_in = False
-    #listenerThread = Thread(target=listen, daemon=True)
+    # listenerThread = Thread(target=listen, daemon=True)
+    # listenerThread.start()
     
     while logged_in == False:
         username = input("Enter Username:\n")
@@ -131,7 +134,7 @@ def main():
         returnmessage = clientSocket.recv(1024).decode()
         print ("Your status is: " + returnmessage[returnmessage.find("\n")+1:]) #Protocol : "STATUS \r\n userstatus\r\n\r\n"
     
-        options = "Choose an option:\n1.) Chat\n2.) List Clients\n3.) Set Status\n4.) Log Out\n5.) Exit\n"              #String of options to be displayed
+        options = "Choose an option:\n[1] Chat\n[2] List Clients\n[3] Set Status\n[4] Log Out\n"              #String of options to be displayed
  
         user_choice = (input(options))#add all options
 
@@ -155,7 +158,8 @@ def main():
             peer_ip = response[response.find("=")+1:response.find(":")]
             peer_port = int(response[response.find(":") + 1:])
             
-
+            global exit_flag
+            exit_flag = False
             chat_thread = Thread(target=chat_session, args=((peer_ip,peer_port),peer_name),daemon=True)
             chat_thread.start()
 
@@ -164,18 +168,11 @@ def main():
            
             
 
-        elif user_choice == "5":                                           #Last option
-            message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
-            clientSocket.send(message.encode())
-            clientSocket.close()
-            logged_in = False
-
-        elif user_choice == "4":                                           #Should be second last option
-            clientSocket.close()
-            logged_in = False
-            print("You have been Logged Out.")
-
-     
+        # elif user_choice == "5":                                           #Last option
+        #     message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
+        #     clientSocket.send(message.encode())
+        #     clientSocket.close()
+        #     logged_in = False
             
         elif user_choice == "3":
             newstatus = input("What would you like to set your status to?\n1.) Available\n2.) Away\n")
@@ -204,6 +201,13 @@ def main():
                 returnmessage = returnmessage[returnmessage.find("\n")+1:]
             print(client_list)
         
+
+        elif user_choice == "4":
+            message = "SETSTATUS \r\n" + "USERNAME {}\r\n".format(username) +  "OFFLINE\r\n\r\n"
+            clientSocket.send(message.encode())                                         
+            clientSocket.close()
+            logged_in = False
+            print("You have been Logged Out.")
    
 if __name__ == "__main__":
     main()
