@@ -158,9 +158,12 @@ def main():
             
             elif response == "AVAILABLE":
                 print("User is Available.\n")
-                peer_name = response[0: response.find("=")]
-                peer_ip = response[response.find("=")+1:response.find(":")]
-                peer_port = int(response[response.find(":") + 1:])
+                response = response[response.find("\n")+1:]
+                peer_name = peer_username
+                peer_ip = response[:response.find("\r")]
+                returnmessage = response[response.find("\n")+1:]
+                peer_port = int(response[:response.find("\r")]) 
+                
                 
                 global exit_flag
                 exit_flag = False
