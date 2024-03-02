@@ -5,8 +5,6 @@ from threading import Thread
 
 users = []
 
-known_port = 50002
-
 def main():                         
 
     PORT=12001
@@ -30,9 +28,7 @@ def server(connectionSocket,addr):
 
     while True:                                                             
         try:
-            #Receive message from client
-            message = connectionSocket.recv(1024).decode()
-            
+            message = connectionSocket.recv(1024).decode()                              #Receive message from client
 
             #Decision tree // formulate response depending on message received
             command = message[0:message.find("\r")-1]
@@ -53,14 +49,14 @@ def server(connectionSocket,addr):
             elif command == "CHAT":
                 returnmessage = chat(message)
 
-            #Send response to client
+            
             print (returnmessage)
-            connectionSocket.send(returnmessage.encode())
+            connectionSocket.send(returnmessage.encode())                               #Send response to client
         except:
             break
             
 
-
+#Log user in to the server
 def login(message):
     username = message[9:message.find("\r")]      #LOGIN PROTOCOL: "LOGIN " + "\r\n" + "USERNAME " + username + "\r\nPASSWORD " + password+ "\r\nIP NUMBER " + clientSocket.getsockname + "\r\nSOCKET NUMBER " + str(clientSocket.getsockname()[1]) + "\r\n\r\n"
     message = message[message.find("\n")+1:]
@@ -75,26 +71,25 @@ def login(message):
         if x.get_username() == username:          #RESPONSE PROTOCOL: "SUCCESSFUL/UNSUCCESSFUL \r\n" + "REASON \r\n\r\n"
             found = True
     
-            if (x.get_status() == "AVAILABLE"):
+            if (x.get_status() == "AVAILABLE"):                                         #User is already logged into the server
                 response =  "UNSUCCESSFUL \r\n" + "DUPLICATE \r\n\r\n"
-            elif x.get_password() == password :
-                ### SUCCESSFUL LOGIN
+            elif x.get_password() == password :                                         #SUCCESSFUL LOGIN
                 response = "SUCCESSFUL \r\n" + "EXISTING \r\n\r\n"
                 if x.get_status() != "AWAY":
                     x.set_status("AVAILABLE")
-                if x.get_ip_num()!=ip_num:
+                if x.get_ip_num()!=ip_num:                                              #Update ip number and chat port number if they have changed since last login
                     x.set_ip_num(ip_num)
                 if x.get_sock_num()!=sock_num:
                     x.set_sock_num(sock_num)    
             else:
                 response =  "UNSUCCESSFUL \r\n" + "PASSWORD \r\n\r\n"
-    if found == False :
+    if found == False :                                                                 #If user does not exist, create new user
         users.append(user(username,password,ip_num,sock_num,"AVAILABLE"))
         
         response = "SUCCESSFUL \r\n" + "NEW \r\n\r\n"
     return response
 
-#Get a user's status or set new status
+#Get a user's status 
 def getstatus(message):                                # Get Protocol: "GETSTATUS \r\n" + "USERNAME " + username +"\r\n\r\n"
     username = message[9:message.find("\r")]
     userstatus = ""
@@ -107,6 +102,7 @@ def getstatus(message):                                # Get Protocol: "GETSTATU
         response = "STATUS \r\n{}\r\n\r\n".format(userstatus)
     return response
 
+#Set user's status
 def setstatus(message):                                    # Set Protocol: "SETSTATUS \r\n" +  "USERNAME {}\r\n".format(username) + "AVAILABLE\r\n\r\n"
     username = message[9:message.find("\r")]
     message = message[message.find("\n")+1:]
@@ -119,7 +115,7 @@ def setstatus(message):                                    # Set Protocol: "SETS
     return response
         
         
-
+#return a list of clients (Available, Offline and Busy) and their statuses
 def list_clients():
     response = "LIST \r\n"
     for x in users:
@@ -129,11 +125,11 @@ def list_clients():
             response += x.get_status() + "\r\n"
             
     response += "\r\n\r\n"
-    return response
+    return response                                             #Response Protocol: "LIST \r\n" + "username\rstatus\r\n" + ....
     
 
 def chat(message):
-    command =  message[:message.find("\r")]   #"CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,own_username)
+    command =  message[:message.find("\r")]                     #Protocol: "CHAT \r\nSTART\r\n{}\r\n{}\r\n\r\n".format(peer_username,own_username)
     message = message[message.find("\n")+1:]
     peer_username = message[:message.find("\r")]
     message = message[message.find("\n")+1:]
@@ -147,18 +143,8 @@ def chat(message):
                     response = "BUSY\r\n\r\n"
                 elif status == "OFFLINE":
                     response = "OFFLINE\r\n\r\n"
-                else:
-                    #for y in users:
-                       # if y.get_username() == username:
-                       #     sport = y.get_sock_num()
-                            
-                    response = "AVAILABLE\r\n{}\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num(),known_port)
-            
-    elif command == "END":
-        for x in users:
-            if x.get_username() == username or x.get_username==peer_username:
-                x.set_status("AVAILABLE")
-                response ="TERMINATED\r\n\r\n"
+                else:        
+                    response = "AVAILABLE\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num())              #If peer is available, Response Protocol: "AVAILABLE\r\npeerIP\r\npeerPort\r\n\r\n"
     return response
                     
 
