@@ -51,6 +51,9 @@ def server(connectionSocket,addr):
 
             elif command == "SOCKET":
                 returnmessage = set_socket(message)
+            
+            elif command == "USERBYIP":
+                returnmessage = getCurrentUser(message)
 
             
             print (returnmessage)
@@ -135,7 +138,7 @@ def chat(message):
     command =  message[:message.find("\r")]                     #Protocol: "CHAT \r\nSTART\r\n{}\r\n\r\n".format(peer_username)
     message = message[message.find("\n")+1:]
     peer_username = message[:message.find("\r")]
-    print (command)
+    
     if command == "START":
         response = "DNE\r\n\r\n"
         for x in users:
@@ -146,7 +149,10 @@ def chat(message):
                 elif status == "OFFLINE":
                     response = "OFFLINE\r\n\r\n"
                 else:        
-                    response = "AVAILABLE\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num())              #If peer is available, Response Protocol: "AVAILABLE\r\npeerIP\r\npeerPort\r\n\r\n"
+                    response = "AVAILABLE\r\n{}\r\n{}\r\n\r\n".format(x.get_ip_num(),x.get_sock_num())      #If peer is available, Response Protocol: "AVAILABLE\r\npeerIP\r\npeerPort\r\n\r\n"
+
+                return response
+            
     return response
                     
 
@@ -164,10 +170,8 @@ def set_socket(message):                                                        
 def getCurrentUser(ip_addr):
     for user in users:
         if user.get_ip_num() == ip_addr.strip():
-            return user   
+            return user.get_username()   
     return -1
-                
-
 
 
 if __name__ == "__main__":
