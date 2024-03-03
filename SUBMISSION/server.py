@@ -51,9 +51,6 @@ def server(connectionSocket,addr):
 
             elif command == "SOCKET":
                 returnmessage = set_socket(message)
-            
-            elif command == "USERBYIP":
-                returnmessage = getCurrentUser(message)
 
             
             print (returnmessage)
@@ -170,8 +167,10 @@ def set_socket(message):                                                        
 def getCurrentUser(ip_addr):
     for user in users:
         if user.get_ip_num() == ip_addr.strip():
-            return user.get_username()   
+            return user   
     return -1
+                
+
 
 
 if __name__ == "__main__":
